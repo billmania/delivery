@@ -4,6 +4,7 @@ from threading import Thread
 from sys import exc_info
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from delivery.script_utils import usbl_info, usbl_setup
 from delivery.cid_callbacks import CIDCallbacks, CIDNotFound
 from delivery.callback_funcs import CallbackFuncs
@@ -25,12 +26,12 @@ class AcommUsblNode(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('port', None),
-                ('data_rate', None),
-                ('name', None),
-                ('x150_id', None),
-                ('x110_id', None),
-                ('ping_period_s', None)
+                ('port', Parameter.Type.STRING),
+                ('data_rate', Parameter.Type.INTEGER),
+                ('name', Parameter.Type.STRING),
+                ('x150_id', Parameter.Type.INTEGER),
+                ('x110_id', Parameter.Type.INTEGER),
+                ('ping_period_s', Parameter.Type.INTEGER)
             ])
 
         parameters = self.get_parameters(['port',
