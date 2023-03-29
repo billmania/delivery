@@ -5,6 +5,8 @@ from sys import exc_info
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+import diagnostic_msgs
+import diagnostic_updater
 from delivery.script_utils import usbl_info, usbl_setup
 from delivery.cid_callbacks import CIDCallbacks, CIDNotFound
 from delivery.callback_funcs import CallbackFuncs
@@ -49,19 +51,6 @@ class AcommUsblNode(Node):
         self._parameters['ping_period_s'] = parameters[5].value
 
         self._usbl = None
-        self._setup_device()
-
-        self._callbacks = CIDCallbacks()
-        self._callback_funcs = CallbackFuncs(
-            beacon_id=self._parameters['x110_id'],
-            range_bearing_cb=self._range_bearing_cb,
-            status_cb=self._status_cb)
-        self._setup_callbacks()
-
-        self._datagram_worker = Thread(
-            target=self._handle_datagrams_in,
-            daemon=True)
-        self._datagram_worker.start()
 
         self.get_logger().info(
             f"port: {self._parameters['port']},"
@@ -70,8 +59,20 @@ class AcommUsblNode(Node):
             f" x110_id: {self._parameters['x110_id']}"
         )
 
-        self._ping_timer = self.create_timer(self._parameters['ping_period_s'],
-                                             self._ping)
+        self._pings_sent = 0
+        self._pings_response = 0
+        self._pings_timeout = 0
+
+    def _ping_diags(self, stat):
+        stat.summary(
+            diagnostic_msgs.msg.DiagnosticStatus.OK,
+            'X150 connected')
+
+        stat.add('pings_sent', f"{self._pings_sent}")
+        stat.add('pings_response', f"{self._pings_response}")
+        stat.add('pings_timeout', f"{self._pings_timeout}")
+
+        return stat
 
     def _status_cb(self, status_msg: str):
         """
@@ -130,16 +131,42 @@ class AcommUsblNode(Node):
 
         self._range_bearing_pub.publish(range_bearing)
 
-    def _setup_device(self):
+    def setup_device(self):
         """
         Initialize the connections to the device and configure it.
         """
 
-        self._usbl = USBL('X150',
-                          self._parameters['port'],
-                          self._parameters['data_rate'])
+        try:
+            self._usbl = USBL('X150',
+                              self._parameters['port'],
+                              self._parameters['data_rate'])
+
+        except Exception as e:
+            self.get_logger().warn("setup_device failed to open USBL"
+                                   f" at {self._parameters['port']}")
+            raise e
+
+        self.get_logger().info("setup_device waiting for X150 to respond")
         usbl_info(self._usbl)
         usbl_setup(self._usbl, beacon_id=self._parameters['x150_id'])
+        self.get_logger().info("setup_device X150 configured")
+
+        self._callbacks = CIDCallbacks()
+        self._callback_funcs = CallbackFuncs(
+            beacon_id=self._parameters['x110_id'],
+            range_bearing_cb=self._range_bearing_cb,
+            status_cb=self._status_cb)
+        self._setup_callbacks()
+
+        self._datagram_worker = Thread(
+            target=self._handle_datagrams_in,
+            daemon=True)
+        self._datagram_worker.start()
+
+        self._ping_timer = self.create_timer(self._parameters['ping_period_s'],
+                                             self._ping)
+
+        self.get_logger().info('ACOMM USBL node started')
 
     def _setup_callbacks(self):
         """
@@ -174,8 +201,7 @@ class AcommUsblNode(Node):
 
         ping_send_cmd = PingSendCmd(self._parameters['x110_id'])
         self._usbl.write(ping_send_cmd.datagram())
-        self.get_logger().info(f"PING sent to {self._parameters['x110_id']}",
-                               throttle_duration_sec=60.0)
+        self._pings_sent += 1
 
     def _handle_datagrams_in(self):
         """
@@ -227,6 +253,19 @@ class AcommUsblNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = AcommUsblNode()
+
+    while True:
+        try:
+            node.setup_device()
+            break
+
+        except Exception:
+            rclpy.spin_once(node, timeout_sec=5.0)
+
+    _diag_updater = diagnostic_updater.Updater(node)
+    _diag_updater.setHardwareID('usbl')
+    _diag_updater.add('PING stats', node._ping_diags)
+
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

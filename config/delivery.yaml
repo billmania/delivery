@@ -1,8 +1,8 @@
 delivery_node:
   ros__parameters:
     name: "AcommUsbl"
-    port: "/dev/ttyUSB0"
+    port: "/tmp/usbl0"
     data_rate: 115200
     x150_id: 15
     x110_id: 1
-    ping_period_s: 4
+    ping_period_s: 1
