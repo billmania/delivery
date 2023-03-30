@@ -7,6 +7,7 @@ from delivery.usbl_datagram import USBLDatagram
 from delivery.usbl_messages import PingErrorResp
 from delivery.usbl_messages import XcvrFixResp
 from delivery.usbl_messages import SettingsSetResp
+from delivery.usbl_messages import StatusResp
 from delivery.usbl_messages import CST_E
 
 
@@ -14,10 +15,14 @@ class CallbackFuncs(object):
 
     def __init__(self,
                  beacon_id: int,
-                 range_bearing_cb: Callable[[float, float, float], None],
+                 range_bearing_cb: Callable[[float, float, float,
+                                             float, float, float,
+                                             float, float, float, float],
+                                            None],
+                 x150_status_cb: Callable[[StatusResp], None],
                  status_cb: Callable[[str], None],
-                 ping_response_diag,
-                 ping_error_diag):
+                 ping_response_diag: Callable[[], None],
+                 ping_error_diag: Callable[[], None]):
 
         """
         Args:
@@ -37,6 +42,11 @@ class CallbackFuncs(object):
         else:
             raise Exception("Must provide a function for "
                             "range and bearing updates")
+        if callable(x150_status_cb):
+            self._x150_status_cb = x150_status_cb
+        else:
+            raise Exception("Must provide a function for "
+                            "X150 status")
         if callable(status_cb):
             self._status_cb = status_cb
         else:
@@ -54,6 +64,10 @@ class CallbackFuncs(object):
         else:
             raise Exception("Must provide a function for "
                             "ping_error diagnostics")
+
+    def status_cb(self, datagram: USBLDatagram):
+        x150_status_resp = StatusResp(datagram)
+        self._x150_status_cb(x150_status_resp)
 
     def sys_info_cb(self, datagram: USBLDatagram):
         self._status_cb("sys_info callback")
@@ -92,8 +106,6 @@ class CallbackFuncs(object):
         except ValueError:
             error = f"{ping_error.status}"
 
-        self._status_cb(f" PingError beacon {ping_error.relevant_beacon_id}"
-                        f" status {error}")
         self._ping_error_diag()
 
     def xcvr_usbl_cb(self, datagram: USBLDatagram):

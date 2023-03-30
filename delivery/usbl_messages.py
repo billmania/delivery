@@ -363,6 +363,21 @@ class CalActionCmd(USBLMsg):
                                       payload=payload)
 
 
+class StatusCmd(USBLMsg):
+    """
+    Request a CID_STATUS response which contains the environment
+    and attitude sections.
+    """
+
+    def __init__(self):
+        super().__init__(CID.STATUS, MSG.Cmd)
+
+        ENV_AND_ATT = 0b00000011
+        payload = pack('<B', ENV_AND_ATT)
+        self._datagram = USBLDatagram(cid=self.cid.value,
+                                      payload=payload)
+
+
 class StatusResp(USBLMsg):
     """
     CID_STATUS responses.
@@ -393,7 +408,7 @@ class StatusResp(USBLMsg):
             attributes = unpack(unpack_format,
                                 self._datagram.payload[start_index:end_index])
             self.status_flags = attributes[0]
-            self.timestamp_sec = attributes[1] / 1000
+            self.timestamp_sec = round(attributes[1] / 1000.0, 1)
 
         except error as e:
             raise Exception("StatusResp flags and timestamp:"
@@ -412,11 +427,11 @@ class StatusResp(USBLMsg):
                 attributes = unpack(
                     unpack_format,
                     self._datagram.payload[start_index:end_index])
-                self.supply_voltage = attributes[0]
-                self.temperature_c = attributes[0] / 10.0
-                self.pressure_mb = attributes[0]
-                self.depth_m = attributes[0] / 10.0
-                self.sound_velocity_mps = attributes[0] / 10.0
+                self.supply_v = attributes[0] / 1000.0
+                self.temperature_c = attributes[1] / 10.0
+                self.pressure_mb = attributes[2]
+                self.depth_m = attributes[3] / 10.0
+                self.sound_mps = attributes[4] / 10.0
 
         except error as e:
             raise Exception(f"StatusResp Attitude: {e}"

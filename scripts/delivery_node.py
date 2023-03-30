@@ -11,8 +11,8 @@ from delivery.script_utils import usbl_info, usbl_setup
 from delivery.cid_callbacks import CIDCallbacks, CIDNotFound
 from delivery.callback_funcs import CallbackFuncs
 from delivery.usbl import USBL, NoDatagram
-from delivery.usbl_messages import CID, PingSendCmd
-from usbl_msgs.msg import RangeBearing
+from delivery.usbl_messages import CID, PingSendCmd, StatusCmd, StatusResp
+from usbl_msgs.msg import RangeBearing, X150Status
 
 
 class AcommUsblNode(Node):
@@ -80,6 +80,23 @@ class AcommUsblNode(Node):
         for returning status information.
         """
         self.get_logger().info(f"STATUS: {status_msg}")
+
+    def _x150_status_cb(self, status_resp: StatusResp):
+        x150_status = X150Status()
+        x150_status.header.stamp = self.get_clock().now().to_msg()
+
+        x150_status.timestamp_sec = status_resp.timestamp_sec
+
+        x150_status.supply_v = status_resp.supply_v
+        x150_status.temperature_c = status_resp.temperature_c
+        x150_status.pressure_mb = status_resp.pressure_mb
+        x150_status.depth_m = status_resp.depth_m
+        x150_status.sound_mps = status_resp.sound_mps
+        x150_status.compass_mag = status_resp.yaw_deg
+        x150_status.pitch_deg = status_resp.pitch_deg
+        x150_status.roll_deg = status_resp.roll_deg
+
+        self._x150_status_pub.publish(x150_status)
 
     def _range_bearing_cb(self,
                           range_m: float,
@@ -155,6 +172,7 @@ class AcommUsblNode(Node):
         self._callback_funcs = CallbackFuncs(
             beacon_id=self._parameters['x110_id'],
             range_bearing_cb=self._range_bearing_cb,
+            x150_status_cb=self._x150_status_cb,
             status_cb=self._status_cb,
             ping_response_diag=self._ping_response_diag,
             ping_error_diag=self._ping_error_diag)
@@ -175,6 +193,8 @@ class AcommUsblNode(Node):
         Add the callback functions.
         """
 
+        self._callbacks.set_callback(CID.STATUS,
+                                     self._callback_funcs.status_cb)
         self._callbacks.set_callback(CID.SYS_INFO,
                                      self._callback_funcs.sys_info_cb)
         self._callbacks.set_callback(CID.PING_SEND,
@@ -195,6 +215,8 @@ class AcommUsblNode(Node):
 
         self._range_bearing_pub = self.create_publisher(RangeBearing,
                                                         'range_bearing', 10)
+        self._x150_status_pub = self.create_publisher(X150Status,
+                                                      'x150_status', 10)
 
     def _ping_response_diag(self):
         self._pings_response += 1
@@ -204,11 +226,17 @@ class AcommUsblNode(Node):
 
     def _ping(self) -> None:
         """
-        Send one PING to the X110.
+        Send one PING to the X110 and a STATUS request to the X150.
+        The intent and the assumption is to send the Ping command first
+        and the Status command second, because the response to the Ping
+        takes at least an order of magnitude longer than the response
+        to the Status command.
         """
 
         ping_send_cmd = PingSendCmd(self._parameters['x110_id'])
         self._usbl.write(ping_send_cmd.datagram())
+        status_cmd = StatusCmd()
+        self._usbl.write(status_cmd.datagram())
         self._pings_sent += 1
 
     def _handle_datagrams_in(self):
