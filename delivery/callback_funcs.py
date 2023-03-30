@@ -15,7 +15,10 @@ class CallbackFuncs(object):
     def __init__(self,
                  beacon_id: int,
                  range_bearing_cb: Callable[[float, float, float], None],
-                 status_cb: Callable[[str], None]):
+                 status_cb: Callable[[str], None],
+                 ping_response_diag,
+                 ping_error_diag):
+
         """
         Args:
             beacon_id: The ID of the X110 being ping-ed.
@@ -39,6 +42,18 @@ class CallbackFuncs(object):
         else:
             raise Exception("Must provide a function for "
                             "status information")
+
+        if callable(ping_response_diag):
+            self._ping_response_diag = ping_response_diag
+        else:
+            raise Exception("Must provide a function for "
+                            "ping_response diagnostics")
+
+        if callable(ping_error_diag):
+            self._ping_error_diag = ping_error_diag
+        else:
+            raise Exception("Must provide a function for "
+                            "ping_error diagnostics")
 
     def sys_info_cb(self, datagram: USBLDatagram):
         self._status_cb("sys_info callback")
@@ -79,6 +94,7 @@ class CallbackFuncs(object):
 
         self._status_cb(f" PingError beacon {ping_error.relevant_beacon_id}"
                         f" status {error}")
+        self._ping_error_diag()
 
     def xcvr_usbl_cb(self, datagram: USBLDatagram):
         pass
@@ -101,6 +117,8 @@ class CallbackFuncs(object):
                                xcvr_fix.remote_north_m,
                                xcvr_fix.remote_depth_m
                                )
+
+        self._ping_response_diag()
 
     def ping_resp_cb(self, datagram: USBLDatagram):
         pass

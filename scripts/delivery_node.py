@@ -61,7 +61,7 @@ class AcommUsblNode(Node):
 
         self._pings_sent = 0
         self._pings_response = 0
-        self._pings_timeout = 0
+        self._pings_error = 0
 
     def _ping_diags(self, stat):
         stat.summary(
@@ -70,7 +70,7 @@ class AcommUsblNode(Node):
 
         stat.add('pings_sent', f"{self._pings_sent}")
         stat.add('pings_response', f"{self._pings_response}")
-        stat.add('pings_timeout', f"{self._pings_timeout}")
+        stat.add('pings_error', f"{self._pings_error}")
 
         return stat
 
@@ -155,7 +155,9 @@ class AcommUsblNode(Node):
         self._callback_funcs = CallbackFuncs(
             beacon_id=self._parameters['x110_id'],
             range_bearing_cb=self._range_bearing_cb,
-            status_cb=self._status_cb)
+            status_cb=self._status_cb,
+            ping_response_diag=self._ping_response_diag,
+            ping_error_diag=self._ping_error_diag)
         self._setup_callbacks()
 
         self._datagram_worker = Thread(
@@ -193,6 +195,12 @@ class AcommUsblNode(Node):
 
         self._range_bearing_pub = self.create_publisher(RangeBearing,
                                                         'range_bearing', 10)
+
+    def _ping_response_diag(self):
+        self._pings_response += 1
+
+    def _ping_error_diag(self):
+        self._pings_error += 1
 
     def _ping(self) -> None:
         """
