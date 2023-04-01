@@ -1,0 +1,19 @@
+/mavros/battery:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/imu/data:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/imu/data_raw:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/imu/mag:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/imu/temperature_baro:
+  reliability: best_effort
+  history: keep_all

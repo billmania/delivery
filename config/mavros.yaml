@@ -1,0 +1,27 @@
+mavros:
+  ros__parameters:
+    # Set the system_id to 255 to masquerade as QGC
+    # This is required if we are sending some MAV messages (e.g., OVERRIDE_RC) but works even if we aren't
+    system_id: 255
+
+    # Start a few plugins
+    # -- command is required to send CMD_REQUEST_AUTOPILOT_CAPABILITIES (#520) to the fcu
+    # -- sys_status publishes /battery and /mavros/state
+    # -- imu publishes /mavros/imu/*
+    # TODO(clyde) get the Bar30 depth and temp
+    plugin_allowlist:
+      - command
+      - sys_status
+      - imu
+
+mavros_node:
+  ros__parameters:
+    # Modify BlueOS settings to add a 2nd UDP Client endpoint at 192.168.2.1:14551, then listen on that endpoint
+    # This leaves room for QGC to listen on 192.168.2.1:14550
+    fcu_url: "udp://192.168.2.1:14551@"
+
+mavros/local_position:
+  ros__parameters:
+    frame_id: "map"
+    tf:
+      send: true
