@@ -34,6 +34,7 @@ def generate_launch_description():
                 '/mavros/local_position/velocity_body',
                 '/mavros/local_position/velocity_local',
                 '/mavros/state',
+                '/range_bearing',
                 '/rosout',
                 '/tf',
                 '/tf_static',
