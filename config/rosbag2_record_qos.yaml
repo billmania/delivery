@@ -1,0 +1,27 @@
+/mavros/battery:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/imu/data:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/imu/data_raw:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/imu/mag:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/local_position/pose:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/local_position/velocity_body:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/local_position/velocity_local:
+  reliability: best_effort
+  history: keep_all
