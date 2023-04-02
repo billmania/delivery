@@ -8,11 +8,12 @@ mavros:
     # -- command is required to send CMD_REQUEST_AUTOPILOT_CAPABILITIES (#520) to the fcu
     # -- sys_status publishes /battery and /mavros/state
     # -- imu publishes /mavros/imu/*
-    # TODO(clyde) get the Bar30 depth and temp
+    # -- local_position publishes /mavros/local_position/*
     plugin_allowlist:
       - command
       - sys_status
       - imu
+      - local_position
 
 mavros_node:
   ros__parameters:

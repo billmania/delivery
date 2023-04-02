@@ -14,6 +14,14 @@
   reliability: best_effort
   history: keep_all
 
-/mavros/imu/temperature_baro:
+/mavros/local_position/pose:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/local_position/velocity_body:
+  reliability: best_effort
+  history: keep_all
+
+/mavros/local_position/velocity_local:
   reliability: best_effort
   history: keep_all
