@@ -37,7 +37,11 @@ def usbl_info(usbl) -> SysInfoResp:
     raise Exception("Failed to get SysInfo")
 
 
-def usbl_setup(usbl, beacon_id: int = 15, roll_offset: int = 0):
+def usbl_setup(usbl,
+               beacon_id: int = 15,
+               yaw_offset: int = 0,
+               pitch_offset: int = 0,
+               roll_offset: int = 0):
     """
     Setup the device for use, such as the ID number, the status messages,
     and the transceiver flags.
@@ -75,8 +79,8 @@ def usbl_setup(usbl, beacon_id: int = 15, roll_offset: int = 0):
     settings_set_cmd.set_salinity(SALINITY_SEAWATER)
     settings_set_cmd.set_ahrs_flags()
     settings_set_cmd.set_env_flags()
-    settings_set_cmd.set_ahrs_offsets(yaw_deg=0,
-                                      pitch_deg=0,
+    settings_set_cmd.set_ahrs_offsets(yaw_deg=yaw_offset,
+                                      pitch_deg=pitch_offset,
                                       roll_deg=roll_offset)
     settings_set_cmd.set_beacon_id(beacon_id)
 
