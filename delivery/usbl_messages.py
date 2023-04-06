@@ -57,11 +57,6 @@ SEA_RESPONSE_DELAY = 10
 #
 MAX_MSG_LENGTH = 31
 
-#
-# To adjust X150 yaw values to ROS yaw values standard, add YAW_OFFSET.
-#
-YAW_OFFSET = 90.0
-
 RANGE_VALID    = 0b00000001  # noqa: E221
 USBL_VALID     = 0b00000010  # noqa: E221
 POSITION_VALID = 0b00000100
@@ -1213,17 +1208,20 @@ class XcvrFixResp(USBLMsg):
         #
         # With the way the X150 is mounted on the ROV, with the transducer
         # pointed down, the connector up, and the Front Reference Marking
-        # facing forward, X is forward, Y is left, and Z is up. This agrees
-        # with
+        # facing forward, X is forward, Y is left, and Z is up, according to:
         # https://www.blueprintsubsea.com/downloads/seatrac/UM-140-D00221-07.pdf
         #
-        # However, in reality, the rotations (roll, pitch, and yaw) do NOT
-        # match the seatrac document. X150 positive pitch is bow up and level
-        # is 0.  Positive roll is starboard down, but level is 180. Positive
-        # yaw is bow left but magnetic north is 0.
+        # TODO: Determine how to offset roll, pitch, and yaw
+        #
+        # However, after setting roll_offset to 180, only the roll values are
+        # correct (port side up is positive). Positive pitch values should
+        # indicate bow down but instead indicate bow up. Yaw values are
+        # inconsistent.
+        # Also, yaw values are NOT compass headings but instead are described
+        # as being relative to magnetic North.
         #
 
-        self.attitude_yaw = ((attributes[4] / 10.0) + YAW_OFFSET) % 360.0
+        self.attitude_yaw = attributes[4] / 10.0
         self.attitude_pitch = attributes[5] / 10.0
         self.attitude_roll = attributes[6] / 10.0
         self.depth_local = attributes[7] / 10.0

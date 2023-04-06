@@ -32,6 +32,9 @@ class AcommUsblNode(Node):
                 ('data_rate', Parameter.Type.INTEGER),
                 ('name', Parameter.Type.STRING),
                 ('x150_id', Parameter.Type.INTEGER),
+                ('yaw_offset', Parameter.Type.INTEGER),
+                ('pitch_offset', Parameter.Type.INTEGER),
+                ('roll_offset', Parameter.Type.INTEGER),
                 ('x110_id', Parameter.Type.INTEGER),
                 ('ping_period_s', Parameter.Type.INTEGER)
             ])
@@ -40,6 +43,9 @@ class AcommUsblNode(Node):
                                           'data_rate',
                                           'name',
                                           'x150_id',
+                                          'yaw_offset',
+                                          'pitch_offset',
+                                          'roll_offset',
                                           'x110_id',
                                           'ping_period_s'])
         self._parameters = dict()
@@ -47,8 +53,11 @@ class AcommUsblNode(Node):
         self._parameters['data_rate'] = parameters[1].value
         self._parameters['name'] = parameters[2].value
         self._parameters['x150_id'] = parameters[3].value
-        self._parameters['x110_id'] = parameters[4].value
-        self._parameters['ping_period_s'] = parameters[5].value
+        self._parameters['yaw_offset'] = parameters[4].value
+        self._parameters['pitch_offset'] = parameters[5].value
+        self._parameters['roll_offset'] = parameters[6].value
+        self._parameters['x110_id'] = parameters[7].value
+        self._parameters['ping_period_s'] = parameters[8].value
 
         self._usbl = None
 
@@ -92,7 +101,7 @@ class AcommUsblNode(Node):
         x150_status.pressure_mb = status_resp.pressure_mb
         x150_status.depth_m = status_resp.depth_m
         x150_status.sound_mps = status_resp.sound_mps
-        x150_status.compass_mag = status_resp.yaw_deg
+        x150_status.yaw_deg = status_resp.yaw_deg
         x150_status.pitch_deg = status_resp.pitch_deg
         x150_status.roll_deg = status_resp.roll_deg
 
@@ -165,8 +174,16 @@ class AcommUsblNode(Node):
 
         self.get_logger().info("setup_device waiting for X150 to respond")
         usbl_info(self._usbl)
-        usbl_setup(self._usbl, beacon_id=self._parameters['x150_id'])
-        self.get_logger().info("setup_device X150 configured")
+        usbl_setup(self._usbl,
+                   beacon_id=self._parameters['x150_id'],
+                   yaw_offset=self._parameters['yaw_offset'],
+                   pitch_offset=self._parameters['pitch_offset'],
+                   roll_offset=self._parameters['roll_offset'])
+        self.get_logger().info("setup_device X150 configured, offsets: "
+                               f" roll  {self._parameters['roll_offset']}"
+                               f" pitch {self._parameters['pitch_offset']}"
+                               f" yaw   {self._parameters['yaw_offset']}"
+                               )
 
         self._callbacks = CIDCallbacks()
         self._callback_funcs = CallbackFuncs(

@@ -18,11 +18,6 @@ BEACON_ID = {
     X_ONE_TEN_SERIAL: 1
 }
 
-ROLL_OFFSET = {
-    X_ONE_FIFTY_SERIAL: 180,
-    X_ONE_TEN_SERIAL: 0
-}
-
 usbl = USBL('Unknown', '/dev/ttyUSB0', 115200)
 
 try:
@@ -31,14 +26,12 @@ try:
 
     serial_number = device_info.hardware['serial_number']
     beacon_id = BEACON_ID[serial_number]
-    roll_offset = ROLL_OFFSET[serial_number]
-    print(f"Beacon ID: {beacon_id}, Roll offset: {roll_offset}")
 
 except Exception as e:
     print(f"usbl_info failed: {e}")
 
 try:
-    usbl_setup(usbl=usbl, beacon_id=beacon_id, roll_offset=roll_offset)
+    usbl_setup(usbl=usbl, beacon_id=beacon_id)
 
 except Exception as e:
     print(f"usbl_setup failed: {e}")
