@@ -1179,10 +1179,10 @@ class XcvrFixResp(USBLMsg):
         unpack_format += 'B'  # src_d 1 byte
         unpack_format += 'B'  # flags 1 byte
         unpack_format += 'B'  # msg_type 1 byte
-        unpack_format += 'h'  # attitude_yaw 2 byte
-        unpack_format += 'h'  # attitude_pitch 2 byte
-        unpack_format += 'h'  # attitude_roll 2 byte
-        unpack_format += 'H'  # depth_local 2 byte
+        unpack_format += 'h'  # attitude_yaw (X150) 2 byte
+        unpack_format += 'h'  # attitude_pitch (X150) 2 byte
+        unpack_format += 'h'  # attitude_roll (X150) 2 byte
+        unpack_format += 'H'  # depth_local (X150) 2 byte
         unpack_format += 'H'  # vos 2 byte
         unpack_format += 'h'  # rssi 2 byte
         end_index = start_index + 16
@@ -1211,7 +1211,8 @@ class XcvrFixResp(USBLMsg):
         # facing forward, X is forward, Y is left, and Z is up, according to:
         # https://www.blueprintsubsea.com/downloads/seatrac/UM-140-D00221-07.pdf
         #
-        # TODO: Determine how to offset roll, pitch, and yaw
+        # TODO: Determine if it's necessary and how to offset X150 roll, pitch,
+        #       and yaw
         #
         # However, after setting roll_offset to 180, only the roll values are
         # correct (port side up is positive). Positive pitch values should
@@ -1232,7 +1233,7 @@ class XcvrFixResp(USBLMsg):
             unpack_format = '<'
             unpack_format += 'L'  # range_count 4 byte
             unpack_format += 'l'  # range_time 4 byte
-            unpack_format += 'H'  # range_dist 2 byte
+            unpack_format += 'H'  # range_dist (to the X110) 2 byte
             end_index = start_index + 10
             attributes = unpack(unpack_format,
                                 self._datagram.payload[start_index:end_index])
@@ -1269,16 +1270,22 @@ class XcvrFixResp(USBLMsg):
                             self._datagram.payload[start_index:end_index])
         start_index = end_index
         #
-        # valid azimuth angles are [0, 360]
+        # valid azimuth angles are [0, 360] relative to the "front" of
+        # the X150.
         #
         self.usbl_azimuth_deg = attributes[0] / 10.0
         #
-        # valid elevation angles are [-90, 90]
+        # valid elevation angles are [-90, 90] relative to the X-Y plane
+        # of the X150.
         #
         self.usbl_elevation_deg = attributes[1] / 10.0
         self.usbl_fit_error = attributes[2]
 
         if self.flags & POSITION_VALID:
+            #
+            # See page 52 of
+            # https://www.blueprintsubsea.com/downloads/seatrac/UM-140-D00221-07.pdf
+            #
             unpack_format = '<'
             unpack_format += 'h'  # position_easting_dm 2 byte
             unpack_format += 'h'  # position_northing_dm 2 byte
@@ -1287,8 +1294,16 @@ class XcvrFixResp(USBLMsg):
             attributes = unpack(unpack_format,
                                 self._datagram.payload[start_index:end_index])
             start_index = end_index
+            #
+            # remote_east_m and remote_north_m are the position of the X110,
+            # relative to the X150 and as calculated by the X150.
+            #
             self.remote_east_m = attributes[0] / 10
             self.remote_north_m = attributes[1] / 10
+            #
+            # remote_depth_m is the depth of the X110, as calculated by the
+            # X150.
+            #
             self.remote_depth_m = attributes[2] / 10
         else:
             self.remote_east_m = 0
@@ -1368,6 +1383,9 @@ class PingRespResp(USBLMsg):
 
         self.flags = attributes[2]
         self.msg_type = attributes[3]
+        #
+        # Next four attributes are for the X150.
+        #
         self.attitude_yaw = attributes[4]
         self.attitude_pitch = attributes[5]
         self.attitude_roll = attributes[6]

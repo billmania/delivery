@@ -108,16 +108,16 @@ class AcommUsblNode(Node):
         self._x150_status_pub.publish(x150_status)
 
     def _range_bearing_cb(self,
-                          range_m: float,
-                          azimuth_deg: float,
-                          elevation_deg: float,
-                          mag_heading_deg: float = None,
-                          pitch_deg: float = None,
-                          roll_deg: float = None,
-                          depth_m: float = None,
-                          remote_east_m: float = None,
-                          remote_north_m: float = None,
-                          remote_depth_m: float = None
+                          x110_range_m: float,
+                          x110_azimuth_deg: float,
+                          x110_elevation_deg: float,
+                          x150_yaw_deg: float = None,
+                          x150_pitch_deg: float = None,
+                          x150_roll_deg: float = None,
+                          x150_depth_m: float = None,
+                          x110_east_m: float = None,
+                          x110_north_m: float = None,
+                          x110_depth_m: float = None
                           ):
         """
         Called when an XcvrFix datagram is received. If the X110 doesn't
@@ -128,30 +128,26 @@ class AcommUsblNode(Node):
         range_bearing.header.stamp = self.get_clock().now().to_msg()
         range_bearing.orientation_present = False
 
-        if (mag_heading_deg is not None
-           and pitch_deg is not None
-           and roll_deg is not None
-           and depth_m is not None):
+        if (x150_yaw_deg is not None
+           and x150_pitch_deg is not None
+           and x150_roll_deg is not None
+           and x150_depth_m is not None):
             range_bearing.orientation_present = True
-            range_bearing.mag_heading_deg = mag_heading_deg
-            range_bearing.pitch_deg = pitch_deg
-            range_bearing.roll_deg = roll_deg
-            range_bearing.depth_m = depth_m
+            range_bearing.yaw_deg = x150_yaw_deg
+            range_bearing.pitch_deg = x150_pitch_deg
+            range_bearing.roll_deg = x150_roll_deg
+            range_bearing.depth_m = x150_depth_m
+        else:
+            range_bearing.orientation_present = False
 
-        if range_m is not None:
+        if x110_range_m is not None:
             range_bearing.range_present = True
-            #
-            # There is intentional redundancy here.
-            # The X150 uses the range, azimuth, and elevation
-            # to calculate the remote east and north. remote_depth_m
-            # is provided directly by the X110.
-            #
-            range_bearing.range_m = range_m
-            range_bearing.azimuth_deg = azimuth_deg
-            range_bearing.elevation_deg = elevation_deg
-            range_bearing.remote_east_m = remote_east_m
-            range_bearing.remote_north_m = remote_north_m
-            range_bearing.remote_depth_m = remote_depth_m
+            range_bearing.range_m = x110_range_m
+            range_bearing.azimuth_deg = x110_azimuth_deg
+            range_bearing.elevation_deg = x110_elevation_deg
+            range_bearing.remote_east_m = x110_east_m
+            range_bearing.remote_north_m = x110_north_m
+            range_bearing.remote_depth_m = x110_depth_m
         else:
             range_bearing.range_present = False
 
