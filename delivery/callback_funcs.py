@@ -101,10 +101,11 @@ class CallbackFuncs(object):
     def ping_error_cb(self, datagram: USBLDatagram):
         ping_error = PingErrorResp(datagram, self._beacon_id)
         try:
-            error = CST_E(ping_error.status)
+            CST_E(ping_error.status)
+            # TODO: Do something useful with the status
 
         except ValueError:
-            error = f"{ping_error.status}"
+            pass
 
         self._ping_error_diag()
 
