@@ -4,17 +4,6 @@ mavros:
     # This is required if we are sending some MAV messages (e.g., OVERRIDE_RC) but works even if we aren't
     system_id: 255
 
-    # Start a few plugins
-    # -- command is required to send CMD_REQUEST_AUTOPILOT_CAPABILITIES (#520) to the fcu
-    # -- sys_status publishes /battery and /mavros/state
-    # -- imu publishes /mavros/imu/*
-    # -- local_position publishes /mavros/local_position/*
-    plugin_allowlist:
-      - command
-      - sys_status
-      - imu
-      - local_position
-
 mavros_node:
   ros__parameters:
     # Modify BlueOS settings to add a 2nd UDP Client endpoint at 192.168.2.1:14551, then listen on that endpoint
