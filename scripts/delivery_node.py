@@ -124,8 +124,8 @@ class AcommUsblNode(Node):
         #
         orientation_quaternion = transforms3d.euler.euler2quat(
             radians(status_resp.roll_deg),
-            radians(status_resp.pitch_deg),
-            radians(status_resp.yaw_deg))
+            radians(-1 * status_resp.pitch_deg),
+            radians(-1 * status_resp.yaw_deg))
 
         x150_pose.pose.orientation.w = orientation_quaternion[0]
         x150_pose.pose.orientation.x = orientation_quaternion[1]
