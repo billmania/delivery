@@ -120,7 +120,10 @@ class AcommUsblNode(Node):
 
         # TODO: Use an explicit axes orientation
         #
-        # Assuming the sxyz Euler axes.
+        # Assuming the sxyz Euler axes. The pitch and yaw provided
+        # by the X150 have their signs reversed from the ROS standard,
+        # hence the multiplication by -1. The roll value is already
+        # compliant.
         #
         orientation_quaternion = euler2quat(
             radians(status_resp.roll_deg),
