@@ -2,11 +2,17 @@
 
 from threading import Thread
 from sys import exc_info
+from math import radians
+
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 import diagnostic_msgs
 import diagnostic_updater
+from geometry_msgs.msg import PoseStamped
+
+from transforms3d.euler import euler2quat
+
 from delivery.script_utils import usbl_info, usbl_setup
 from delivery.cid_callbacks import CIDCallbacks, CIDNotFound
 from delivery.callback_funcs import CallbackFuncs
@@ -92,7 +98,13 @@ class AcommUsblNode(Node):
 
     def _x150_status_cb(self, status_resp: StatusResp):
         x150_status = X150Status()
+        x150_pose = PoseStamped()
+
         x150_status.header.stamp = self.get_clock().now().to_msg()
+        x150_pose.header.stamp = x150_status.header.stamp
+
+        # TODO: Be less brute force about the frame
+        x150_pose.header.frame_id = 'base_link'
 
         x150_status.timestamp_sec = status_resp.timestamp_sec
 
@@ -101,11 +113,30 @@ class AcommUsblNode(Node):
         x150_status.pressure_mb = status_resp.pressure_mb
         x150_status.depth_m = status_resp.depth_m
         x150_status.sound_mps = status_resp.sound_mps
+
         x150_status.yaw_deg = status_resp.yaw_deg
         x150_status.pitch_deg = status_resp.pitch_deg
         x150_status.roll_deg = status_resp.roll_deg
 
+        # TODO: Use an explicit axes orientation
+        #
+        # Assuming the sxyz Euler axes. The pitch and yaw provided
+        # by the X150 have their signs reversed from the ROS standard,
+        # hence the multiplication by -1. The roll value is already
+        # compliant.
+        #
+        orientation_quaternion = euler2quat(
+            radians(status_resp.roll_deg),
+            radians(-1 * status_resp.pitch_deg),
+            radians(-1 * status_resp.yaw_deg))
+
+        x150_pose.pose.orientation.w = orientation_quaternion[0]
+        x150_pose.pose.orientation.x = orientation_quaternion[1]
+        x150_pose.pose.orientation.y = orientation_quaternion[2]
+        x150_pose.pose.orientation.z = orientation_quaternion[3]
+
         self._x150_status_pub.publish(x150_status)
+        self._x150_pose_pub.publish(x150_pose)
 
     def _range_bearing_cb(self,
                           x110_range_m: float,
@@ -230,6 +261,8 @@ class AcommUsblNode(Node):
                                                         'range_bearing', 10)
         self._x150_status_pub = self.create_publisher(X150Status,
                                                       'x150_status', 10)
+        self._x150_pose_pub = self.create_publisher(PoseStamped,
+                                                    'x150_pose', 10)
 
     def _ping_response_diag(self):
         self._pings_response += 1
