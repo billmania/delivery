@@ -11,7 +11,7 @@ import diagnostic_msgs
 import diagnostic_updater
 from geometry_msgs.msg import PoseStamped
 
-import transforms3d
+from transforms3d.euler import euler2quat
 
 from delivery.script_utils import usbl_info, usbl_setup
 from delivery.cid_callbacks import CIDCallbacks, CIDNotFound
@@ -122,7 +122,7 @@ class AcommUsblNode(Node):
         #
         # Assuming the sxyz Euler axes.
         #
-        orientation_quaternion = transforms3d.euler.euler2quat(
+        orientation_quaternion = euler2quat(
             radians(status_resp.roll_deg),
             radians(-1 * status_resp.pitch_deg),
             radians(-1 * status_resp.yaw_deg))
