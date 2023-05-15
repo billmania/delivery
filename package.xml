@@ -21,6 +21,7 @@
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>usbl_msgs</depend>
+  <depend>geometry_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

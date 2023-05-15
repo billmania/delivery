@@ -3,6 +3,7 @@
 ## Install
 
 This node requires manual installation of the OS package crcmod.
+It requires the PyPi module transforms3d.
 
 Get dependencies:
 ~~~
