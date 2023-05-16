@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import rclpy
-import rclpy.logging
 from geometry_msgs.msg import PoseStamped
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, ReliabilityPolicy, QoSProfile
@@ -29,10 +28,11 @@ class ImuToPoseNode(Node):
         msg = PoseStamped()
         msg.header = imu_msg.header
         msg.pose.orientation = imu_msg.orientation
+        # Leave msg.pose.position as (0, 0, 0), because we don't have any valid position information.
 
-        # Provide a little offset so that the 2 messages don't stack on top of each other in rviz2.
-        msg.pose.position.x = 0.1
-        msg.pose.position.z = 0.25
+        # Provide a little offset so that the 2 markers don't stack on top of each other in rviz2.
+        msg.pose.position.x += 0.1
+        msg.pose.position.z += 0.25
 
         self._pose_pub.publish(msg)
 
