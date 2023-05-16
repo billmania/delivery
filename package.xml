@@ -20,6 +20,7 @@
 
   <depend>geometry_msgs</depend>
   <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>usbl_msgs</depend>
 

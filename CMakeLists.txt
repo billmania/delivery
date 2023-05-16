@@ -28,6 +28,7 @@ install(DIRECTORY config
 ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
         scripts/delivery_node.py
+        scripts/imu_to_pose_node.py
         DESTINATION lib/${PROJECT_NAME}
 )
 
